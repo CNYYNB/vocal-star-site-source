@@ -7,6 +7,8 @@ binding = "DB"
 database_name = "vocal-star-db"
 database_id = "fbe2b2fa-d96c-404d-ac23-e2d1564e6f7a"
 
+
 [vars]
 PAYEE_NAME = "站长"
-PAYMENT_TIP = "请扫码支付 5 元，并在付款备注中填写订单备注码或注册邮箱。付款完成后点击“我已付款”，等待管理员审核到账。"
+PAYMENT_TIP = "请按照当前订单显示的金额扫码支付，并在付款备注中填写订单备注码或注册邮箱。付款完成后点击“我已付款”，等待管理员审核到账。"
+
