@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星声工坊｜音频柔化处理网站</title>
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary2: #8b5cf6;
+      --bg: #020617;
+      --panel: #0f172a;
+      --panel2: #111827;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --line: #1e293b;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: radial-gradient(circle at top left, rgba(59,130,246,.18), transparent 34%), radial-gradient(circle at top right, rgba(139,92,246,.18), transparent 36%), var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: 24px;
+      margin: 0;
+      min-height: 100vh;
+    }
+    .container { max-width: 1120px; width: 100%; margin: 0 auto; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      display: grid; place-items: center; font-weight: 900;
+      box-shadow: 0 14px 30px rgba(59,130,246,.25);
+    }
+    .brand h1 { margin: 0; font-size: 22px; line-height: 1.15; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .account {
+      min-width: 310px;
+      background: rgba(15, 23, 42, .88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 20px 45px rgba(0,0,0,.24);
+    }
+    .account-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .account small { color: var(--muted); display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+    .stars { font-size: 22px; font-weight: 900; color: #fde68a; }
+    .auth-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .auth-form input {
+      width: 100%; border: 1px solid #334155; outline: none; border-radius: 10px;
+      background: #020617; color: var(--text); padding: 10px 11px; font-size: 13px;
+    }
+    .auth-form input:first-child { grid-column: span 2; }
+    button, .btn {
+      border: none; border-radius: 10px; padding: 10px 13px; font-weight: 800; cursor: pointer;
+      transition: .2s; color: var(--white); background: #1e293b; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    button:hover:not(:disabled), .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    button:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+    .btn-primary { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+    .btn-success { background: linear-gradient(135deg, #059669, #10b981); }
+    .btn-ghost { background: #0b1220; border: 1px solid #334155; }
+    .btn-danger { background: #991b1b; }
+
+    .layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+    .card {
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,.55);
+      padding: 28px;
+    }
+    .hero { text-align: center; margin-bottom: 26px; }
+    .hero h2 { margin: 0 0 8px; font-size: 28px; color: #bfdbfe; }
+    .subtitle { color: var(--muted); font-size: 14px; line-height: 1.65; margin: 0; }
+
+    .upload-area {
+      border: 2px dashed #334155;
+      border-radius: 18px;
+      padding: 38px 20px;
+      text-align: center;
+      transition: 0.3s;
+      background: rgba(2, 6, 23, 0.55);
+      margin-bottom: 24px;
+      cursor: pointer;
+    }
+    .upload-area:hover { border-color: var(--primary); background: rgba(59, 130, 246, 0.10); }
+    .upload-title { font-size: 17px; font-weight: 900; margin-bottom: 8px; }
+    #file-name { display: block; margin-top: 12px; color: var(--success); font-weight: 800; word-break: break-all; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+    .control-item { background: rgba(0,0,0,0.36); padding: 15px; border-radius: 14px; border-left: 3px solid var(--primary); }
+    label { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: #cbd5e1; margin-bottom: 10px; font-weight: 700; }
+    label span { white-space: nowrap; color: #dbeafe; }
+    .desc { font-size: 11px; color: #64748b; margin-top: 8px; display: block; font-weight: normal; line-height: 1.45; }
+    input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--primary); margin-top: 5px; }
+    .action-btn {
+      width: 100%; padding: 18px; background: linear-gradient(135deg, #2563eb, #3b82f6, #8b5cf6);
+      color: #fff; border: none; border-radius: 14px; font-size: 18px; font-weight: 900; cursor: pointer;
+      transition: 0.3s; box-shadow: 0 14px 24px -8px rgba(59, 130, 246, 0.45);
+    }
+    .action-btn:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; box-shadow: none; }
+    .hint { margin: 10px 0 0; color: #93c5fd; font-size: 12px; text-align: center; }
+    #status-bar { text-align: center; margin-top: 18px; font-size: 14px; font-weight: 800; color: var(--warn); min-height: 22px; white-space: pre-wrap; line-height: 1.55; }
+    .audio-wrapper { margin-top: 24px; background: #000; padding: 14px; border-radius: 14px; display: none; }
+    audio { width: 100%; outline: none; }
+    .download-box { margin-top: 14px; text-align: center; display: none; }
+    .dl-btn { text-decoration: none; background: #fff; color: #000; padding: 12px 24px; border-radius: 10px; font-weight: 900; display: inline-block; transition: 0.2s; }
+    .dl-btn:hover { background: #e2e8f0; }
+
+    .side h3 { margin: 0 0 12px; font-size: 18px; }
+    .price-box {
+      background: linear-gradient(135deg, rgba(37,99,235,.24), rgba(124,58,237,.20));
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .price { font-size: 34px; font-weight: 950; margin: 8px 0; }
+    .price span { font-size: 14px; color: var(--muted); font-weight: 700; }
+    .list { margin: 14px 0 0; padding: 0; list-style: none; color: #cbd5e1; font-size: 13px; line-height: 1.8; }
+    .list li::before { content: "✓ "; color: var(--success); font-weight: 900; }
+    .notice {
+      font-size: 12px; color: #94a3b8; line-height: 1.65;
+      background: rgba(2,6,23,.55); border: 1px solid #1e293b; border-radius: 14px; padding: 13px;
+    }
+    .order-box { display: none; margin-top: 14px; padding: 13px; background: #020617; border: 1px solid #334155; border-radius: 14px; }
+    .order-box strong { color: #fde68a; }
+    .toast { margin-top: 10px; color: #fbbf24; font-size: 12px; min-height: 17px; }
+    .footer { text-align: center; color: #64748b; font-size: 12px; margin-top: 18px; }
+
+    @media (max-width: 900px) {
+      body { padding: 14px; }
+      .topbar, .layout { grid-template-columns: 1fr; display: grid; }
+      .account { width: 100%; min-width: auto; }
+      .grid { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">星</div>
+        <div>
+          <h1>星声工坊</h1>
+          <p>本地音频柔化处理 · 账号星星计费</p>
+        </div>
+      </div>
+
+      <div class="account">
+        <div id="logged-out">
+          <div class="account-row">
+            <div>
+              <b>登录后开始处理</b>
+              <small>注册账号即可充值星星</small>
+            </div>
+          </div>
+          <div class="auth-form">
+            <input id="email" type="email" placeholder="邮箱" autocomplete="email" />
+            <input id="password" type="password" placeholder="密码，至少 6 位" autocomplete="current-password" />
+            <button class="btn-primary" id="login-btn">登录</button>
+            <button class="btn-ghost" id="register-btn">注册</button>
+          </div>
+        </div>
+
+        <div id="logged-in" style="display:none;">
+          <div class="account-row">
+            <div>
+              <b id="user-email">用户</b>
+              <small>当前余额</small>
+            </div>
+            <div class="stars"><span id="star-count">0</span> ⭐</div>
+          </div>
+          <div class="account-row" style="margin-top:12px;">
+            <button class="btn-success" id="buy-btn">选择套餐充值</button>
+            <button class="btn-ghost" id="logout-btn">退出</button>
+          </div>
+        </div>
+        <div class="toast" id="auth-toast"></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <main class="card">
+        <div class="hero">
+          <h2>人声动态柔化处理引擎</h2>
+          <p class="subtitle">保留原音频在浏览器本地处理，不上传原始音频；每完成一首音乐处理消耗 1 颗星星。</p>
+        </div>
+
+        <div class="upload-area" onclick="document.getElementById('audio-upload').click()">
+          <div class="upload-title">📂 点击载入音频文件</div>
+          <div style="color:#94a3b8;font-size:13px;">支持浏览器可解码的 MP3 / WAV / M4A 等格式</div>
+          <input type="file" id="audio-upload" accept="audio/*" style="display: none;" />
+          <span id="file-name">尚未选择文件</span>
+        </div>
+
+        <div class="grid">
+          <div class="control-item">
+            <label>喉腔共振动态游离 <span id="formant-val">100 Hz</span></label>
+            <input type="range" id="formant" min="0" max="250" step="10" value="100" />
+            <span class="desc">模拟演唱时口腔与共振腔的微小变化，让声音质感更自然、更有流动性。</span>
+          </div>
+          <div class="control-item">
+            <label>非对称磁带饱和 <span id="tape-val">22%</span></label>
+            <input type="range" id="tape" min="0" max="50" step="1" value="22" />
+            <span class="desc">添加温和模拟饱和与偶次谐波，让数字音色更温暖，减少生硬感。</span>
+          </div>
+          <div class="control-item">
+            <label>高频滚降模拟 <span id="rolloff-val">13000 Hz</span></label>
+            <input type="range" id="rolloff" min="9000" max="18000" step="500" value="13000" />
+            <span class="desc">用平缓低通模拟磁带/模拟设备的高频响应，让高频更柔和。</span>
+          </div>
+          <div class="control-item">
+            <label>混沌节拍漂移 <span id="chaos-val">12.0 ms</span></label>
+            <input type="range" id="chaos" min="0" max="25" step="0.5" value="12.0" />
+            <span class="desc">加入极细微时间漂移，适合轻微增加演唱的动态松弛感。</span>
+          </div>
+        </div>
+
+        <button id="process-btn" class="action-btn" disabled>登录并载入音频后可处理 · 消耗 1 星</button>
+        <p class="hint">处理在本机浏览器完成；扣星由网站后端记录。</p>
+        <div id="status-bar">等待登录和载入音频...</div>
+
+        <div class="audio-wrapper" id="audio-wrapper">
+          <audio id="result-player" controls></audio>
+        </div>
+        <div class="download-box" id="download-box"></div>
+      </main>
+
+      <aside class="card side">
+        <h3>付费规则</h3>
+        <div class="price-box">
+          <div>按比例充值 · 1 元 = 20 星</div>
+          <div class="price">¥5–¥100 <span>多档可选</span></div>
+          <label for="package-amount" style="display:block;margin:12px 0 8px;">选择充值档位</label>
+          <select id="package-amount" style="width:100%;padding:12px;background:#020617;color:#fff;border:1px solid #334155;border-radius:10px;margin-bottom:12px;">
+            <option value="5">¥5 — 100 星</option><option value="10">¥10 — 200 星</option><option value="20">¥20 — 400 星</option><option value="30">¥30 — 600 星</option><option value="50">¥50 — 1000 星</option><option value="100">¥100 — 2000 星</option>
+          </select>
+          <button class="btn-success" id="buy-btn-side" style="width:100%;">立即充值</button>
+          <ul class="list">
+            <li>1 首音乐消耗 1 颗星星</li>
+            <li>100 颗星星可处理 100 首音乐</li>
+            <li>处理失败会自动退回本次消耗</li>
+          </ul>
+        </div>
+        <div class="order-box" id="order-box"></div>
+        <div class="notice">
+          说明：当前版本支持收款码人工充值。用户扫码付款后提交“我已付款”，你在后台确认到账后，系统按所选套餐发放对应星星；实际付款金额必须与订单一致，多付或少付请联系管理员处理。
+        </div>
+      </aside>
+    </div>
+
+    <div class="footer">© 星声工坊 Demo · 请确保你拥有音频处理与发布所需的合法权利</div>
+  </div>
+
+<script>
+const controls = ['formant', 'tape', 'rolloff', 'chaos'];
+controls.forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => {
+    let val = e.target.value;
+    if (id === 'formant' || id === 'rolloff') val += ' Hz';
+    if (id === 'tape') val += '%';
+    if (id === 'chaos') val += ' ms';
+    document.getElementById(id + '-val').textContent = val;
+  });
+});
+
+let audioContext;
+let originalBuffer = null;
+let originalStats = null;
+let currentUrl = null;
+let selectedFileName = '';
+let currentUser = null;
+let token = localStorage.getItem('vocal_site_token') || '';
+
+const $ = id => document.getElementById(id);
+
+function setToast(msg, ok = false) {
+  $('auth-toast').textContent = msg || '';
+  $('auth-toast').style.color = ok ? 'var(--success)' : '#fbbf24';
+}
+
+async function api(path, options = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(path, Object.assign({}, options, { headers }));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || '请求失败');
+  return data;
+}
+
+function renderUser(user) {
+  currentUser = user || null;
+  if (currentUser) {
+    $('logged-out').style.display = 'none';
+    $('logged-in').style.display = 'block';
+    $('user-email').textContent = currentUser.email;
+    $('star-count').textContent = currentUser.stars || 0;
+  } else {
+    $('logged-out').style.display = 'block';
+    $('logged-in').style.display = 'none';
+    $('star-count').textContent = '0';
+  }
+  updateProcessButton();
+}
+
+function updateProcessButton() {
+  const btn = $('process-btn');
+  if (!currentUser) {
+    btn.disabled = true;
+    btn.textContent = '请先登录 · 每首消耗 1 星';
+    return;
+  }
+  if (!originalBuffer) {
+    btn.disabled = true;
+    btn.textContent = '请先载入音频 · 每首消耗 1 星';
+    return;
+  }
+  if (Number(currentUser.stars || 0) < 1) {
+    btn.disabled = true;
+    btn.textContent = '星星不足，请先充值';
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = '开始处理并扣除 1 颗星星';
+}
+
+async function refreshMe() {
+  if (!token) return renderUser(null);
+  try {
+    const data = await api('/api/me');
+    renderUser(data.user);
+  } catch (err) {
+    localStorage.removeItem('vocal_site_token');
+    token = '';
+    renderUser(null);
+  }
+}
+
+$('login-btn').addEventListener('click', async () => {
+  try {
+    setToast('正在登录...');
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: $('email').value, password: $('password').value })
+    });
+    token = data.token;
+    localStorage.setItem('vocal_site_token', token);
+    renderUser(data.user);
+    setToast('登录成功', true);
+  } catch (err) {
+    setToast(err.message);
+  }
+});
+
+$('register-btn').addEventListener('click', async () => {
+  try {
+    setToast('正在注册...');
+    const data = await api('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email: $('email').value, password: $('password').value })
+    });
+    token = data.token;
+    localStorage.setItem('vocal_site_token', token);
+    renderUser(data.user);
+    setToast('注册成功', true);
+  } catch (err) {
+    setToast(err.message);
+  }
+});
+
+$('logout-btn').addEventListener('click', async () => {
+  try { await api('/api/auth/logout', { method: 'POST', body: '{}' }); } catch(e) {}
+  token = '';
+  localStorage.removeItem('vocal_site_token');
+  renderUser(null);
+  setToast('已退出');
+});
+
+function orderStatusText(status) {
+  return ({ pending: '待付款', reviewing: '等待人工审核', paid: '已到账', rejected: '已驳回' })[status] || status;
+}
+
+async function buyStars() {
+  if (!currentUser) {
+    setToast('请先登录再充值');
+    return;
+  }
+  try {
+    setToast('正在创建订单...');
+    const data = await api('/api/orders', { method: 'POST', body: JSON.stringify({amountCny: Number($('package-amount').value)}) });
+    const order = data.order;
+    const box = $('order-box');
+    box.style.display = 'block';
+    box.innerHTML = `
+      <div><strong>扫码付款充值</strong></div>
+      <div style="margin-top:6px;color:#cbd5e1;font-size:13px;line-height:1.8;">
+        金额：¥${order.amountCny}<br>
+        到账：${order.stars} 颗星星<br>
+        订单号：<span style="color:#e0f2fe;word-break:break-all;">${order.id}</span><br>
+        付款备注：<b style="color:#fde68a;">${order.memo}</b><br>
+        状态：<span id="order-status-text">${orderStatusText(order.status)}</span>
+      </div>
+      <div style="margin:12px auto 8px;max-width:220px;background:#fff;padding:10px;border-radius:14px;">
+        <img src="${data.qrImage}" onerror="this.onerror=null;this.src='${data.fallbackQrImage}'" alt="收款码" style="width:100%;display:block;border-radius:8px;" />
+      </div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.6;">${data.paymentTip}</div>
+      <button class="btn-primary" style="width:100%;margin-top:10px;" onclick="markPaid('${order.id}')">我已付款，提交审核</button>
+    `;
+    setToast('订单创建成功。请扫码付款，到账后由管理员确认。', true);
+  } catch (err) {
+    setToast(err.message);
+  }
+}
+
+window.markPaid = async function(orderId) {
+  try {
+    setToast('正在提交付款确认...');
+    const data = await api(`/api/orders/${orderId}/user-paid`, { method: 'POST', body: '{}' });
+    const statusEl = $('order-status-text');
+    if (statusEl) statusEl.textContent = orderStatusText(data.order.status);
+    $('order-box').innerHTML += `<div style="margin-top:10px;color:#fbbf24;font-weight:800;">已提交，请等待管理员审核到账。</div>`;
+    setToast('已提交付款确认', true);
+  } catch (err) {
+    setToast(err.message);
+  }
+}
+
+$('buy-btn').addEventListener('click', buyStars);
+$('buy-btn-side').addEventListener('click', buyStars);
+
+function getBufferStats(buf) {
+  let peak = 0, sumSq = 0, count = 0;
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < data.length; i++) {
+      const a = Math.abs(data[i]);
+      if (a > peak) peak = a;
+      sumSq += data[i] * data[i];
+    }
+    count += data.length;
+  }
+  const rms = Math.sqrt(sumSq / Math.max(count, 1));
+  const sr = buf.sampleRate;
+  const frame = Math.max(1024, Math.floor(sr * 0.20));
+  const frames = [];
+  for (let start = 0; start < buf.length; start += frame) {
+    const end = Math.min(start + frame, buf.length);
+    let fs = 0, fc = 0;
+    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+      const data = buf.getChannelData(ch);
+      for (let i = start; i < end; i++) fs += data[i] * data[i];
+      fc += (end - start);
+    }
+    frames.push(Math.sqrt(fs / Math.max(fc, 1)));
+  }
+  frames.sort((a, b) => a - b);
+  const keepFrom = Math.floor(frames.length * 0.50);
+  const activeFrames = frames.slice(keepFrom).filter(v => v > 1e-7);
+  const activeRms = activeFrames.length ? activeFrames.reduce((a, b) => a + b, 0) / activeFrames.length : rms;
+  const db = v => v > 1e-7 ? 20 * Math.log10(v) : -120;
+  return { peak, activeRms, peakDb: db(peak), activeDb: db(activeRms) };
+}
+
+$('audio-upload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFileName = file.name;
+  $('file-name').textContent = file.name;
+  $('status-bar').textContent = '正在读取音频...';
+  $('status-bar').style.color = '#fbbf24';
+  $('process-btn').disabled = true;
+
+  const reader = new FileReader();
+  reader.onload = async function(event) {
+    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      originalBuffer = await audioContext.decodeAudioData(event.target.result);
+      originalStats = getBufferStats(originalBuffer);
+      $('status-bar').textContent = '✅ 解码成功，可以开始处理。';
+      $('status-bar').style.color = 'var(--success)';
+      updateProcessButton();
+    } catch (error) {
+      originalBuffer = null;
+      originalStats = null;
+      $('status-bar').textContent = '❌ 解码失败，请换一个音频格式。';
+      $('status-bar').style.color = '#ef4444';
+      updateProcessButton();
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+$('process-btn').addEventListener('click', async function() {
+  if (!originalBuffer || !currentUser) return;
+
+  let usageId = null;
+  this.disabled = true;
+  $('audio-wrapper').style.display = 'none';
+  $('download-box').style.display = 'none';
+  $('status-bar').textContent = '正在扣除 1 颗星星...';
+  $('status-bar').style.color = '#fbbf24';
+
+  try {
+    const consume = await api('/api/process/consume', {
+      method: 'POST',
+      body: JSON.stringify({ filename: selectedFileName })
+    });
+    usageId = consume.usageId;
+    renderUser(consume.user);
+  } catch (err) {
+    $('status-bar').textContent = '❌ ' + err.message;
+    $('status-bar').style.color = '#ef4444';
+    updateProcessButton();
+    return;
+  }
+
+  $('status-bar').textContent = '⚙️ 正在执行音频柔化与响度校准...';
+
+  setTimeout(async () => {
+    try {
+      const sr = originalBuffer.sampleRate;
+      const offlineCtx = new OfflineAudioContext(2, originalBuffer.length + (sr * 0.2), sr);
+      const source = offlineCtx.createBufferSource();
+      source.buffer = originalBuffer;
+
+      const driftDelay = offlineCtx.createDelay(1.0);
+      driftDelay.delayTime.value = 0.05;
+      const chaosAmount = parseFloat($('chaos').value) / 1000;
+
+      const lfo1 = offlineCtx.createOscillator(); lfo1.frequency.value = 0.11;
+      const gain1 = offlineCtx.createGain(); gain1.gain.value = chaosAmount * 0.5;
+      const lfo2 = offlineCtx.createOscillator(); lfo2.frequency.value = 0.37;
+      const gain2 = offlineCtx.createGain(); gain2.gain.value = chaosAmount * 0.3;
+      const lfo3 = offlineCtx.createOscillator(); lfo3.frequency.value = 0.73;
+      const gain3 = offlineCtx.createGain(); gain3.gain.value = chaosAmount * 0.2;
+
+      lfo1.connect(gain1).connect(driftDelay.delayTime);
+      lfo2.connect(gain2).connect(driftDelay.delayTime);
+      lfo3.connect(gain3).connect(driftDelay.delayTime);
+      lfo1.start(0); lfo2.start(0); lfo3.start(0);
+
+      source.connect(driftDelay);
+
+      const formantAmount = parseFloat($('formant').value);
+      const peak1 = offlineCtx.createBiquadFilter();
+      peak1.type = 'peaking'; peak1.frequency.value = 800; peak1.Q.value = 1.5; peak1.gain.value = 3.0;
+      const lfoF1 = offlineCtx.createOscillator(); lfoF1.frequency.value = 0.23;
+      const gainF1 = offlineCtx.createGain(); gainF1.gain.value = formantAmount * 0.8;
+      lfoF1.connect(gainF1).connect(peak1.frequency); lfoF1.start(0);
+
+      const peak2 = offlineCtx.createBiquadFilter();
+      peak2.type = 'peaking'; peak2.frequency.value = 2500; peak2.Q.value = 2.0; peak2.gain.value = 2.5;
+      const lfoF2 = offlineCtx.createOscillator(); lfoF2.frequency.value = 0.17;
+      const gainF2 = offlineCtx.createGain(); gainF2.gain.value = formantAmount;
+      lfoF2.connect(gainF2).connect(peak2.frequency); lfoF2.start(0);
+
+      driftDelay.connect(peak1).connect(peak2);
+
+      const tapeMix = offlineCtx.createGain();
+      const wave = offlineCtx.createWaveShaper();
+      const n = 4096;
+      const curve = new Float32Array(n);
+      const tapeLevel = parseFloat($('tape').value) / 100;
+      const drive = 1 + tapeLevel * 8;
+
+      for (let i = 0; i < n; i++) {
+        let x = i * 2 / (n - 1) - 1;
+        if (x > 0) curve[i] = Math.tanh(drive * x) / Math.tanh(drive);
+        else curve[i] = (Math.exp(drive * x * 0.8) - 1) / (Math.exp(drive * 0.8) - 1);
+      }
+      wave.curve = curve;
+
+      const wetGain = offlineCtx.createGain(); wetGain.gain.value = tapeLevel;
+      const dryGain = offlineCtx.createGain(); dryGain.gain.value = 1 - tapeLevel;
+      peak2.connect(dryGain).connect(tapeMix);
+      peak2.connect(wave).connect(wetGain).connect(tapeMix);
+
+      const tapeRolloff = offlineCtx.createBiquadFilter();
+      tapeRolloff.type = 'lowpass';
+      tapeRolloff.frequency.value = parseFloat($('rolloff').value);
+      tapeRolloff.Q.value = 0.5;
+      tapeMix.connect(tapeRolloff);
+
+      const comp = offlineCtx.createDynamicsCompressor();
+      comp.threshold.value = -12; comp.ratio.value = 2.5; comp.attack.value = 0.005; comp.release.value = 0.15;
+      tapeRolloff.connect(comp).connect(offlineCtx.destination);
+      source.start(0);
+
+      const renderedBuffer = await offlineCtx.startRendering();
+
+      $('status-bar').textContent = '🔊 正在进行响度校准...';
+      const postStats = getBufferStats(renderedBuffer);
+      const targetActiveDb = Math.max(Math.min(originalStats.activeDb, -10.0), -20.0);
+      const loudnessGain = Math.pow(10, targetActiveDb / 20) / Math.max(postStats.activeRms, 1e-9);
+      const peakCeiling = Math.pow(10, -1.0 / 20);
+      const peakGain = peakCeiling / Math.max(postStats.peak, 1e-9);
+      const finalGain = Math.min(Math.max(loudnessGain, 0.1), peakGain);
+
+      const finalBuffer = new AudioBuffer({ length: renderedBuffer.length, numberOfChannels: 2, sampleRate: sr });
+      for (let ch = 0; ch < 2; ch++) {
+        const srcData = renderedBuffer.getChannelData(ch);
+        const dstData = finalBuffer.getChannelData(ch);
+        for (let i = 0; i < srcData.length; i++) dstData[i] = Math.max(-1, Math.min(1, srcData[i] * finalGain));
+      }
+
+      const wavBlob = audioBufferToWavBlob(finalBuffer);
+      if (currentUrl) URL.revokeObjectURL(currentUrl);
+      currentUrl = URL.createObjectURL(wavBlob);
+      $('result-player').src = currentUrl;
+      $('audio-wrapper').style.display = 'block';
+
+      const dlBox = $('download-box');
+      dlBox.innerHTML = `<a href="${currentUrl}" download="processed_vocal_softened.wav" class="dl-btn">⬇️ 保存处理版 WAV</a>`;
+      dlBox.style.display = 'block';
+      $('status-bar').textContent = `🎉 处理完成！已消耗 1 星。\n原曲RMS: ${originalStats.activeDb.toFixed(1)}dB | 最终RMS: ${getBufferStats(finalBuffer).activeDb.toFixed(1)}dB`;
+      $('status-bar').style.color = 'var(--success)';
+    } catch (error) {
+      console.error(error);
+      if (usageId) {
+        try {
+          const refund = await api('/api/process/refund', {
+            method: 'POST',
+            body: JSON.stringify({ usageId })
+          });
+          renderUser(refund.user);
+        } catch(e) {}
+      }
+      $('status-bar').textContent = '❌ 处理发生错误，本次星星已尝试自动退回。';
+      $('status-bar').style.color = '#ef4444';
+    } finally {
+      updateProcessButton();
+    }
+  }, 100);
+});
+
+function audioBufferToWavBlob(buffer) {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const format = 1;
+  const bitDepth = 16;
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = numChannels * bytesPerSample;
+  const dataSize = buffer.length * blockAlign;
+  const bufferSize = 44 + dataSize;
+  const arrayBuffer = new ArrayBuffer(bufferSize);
+  const view = new DataView(arrayBuffer);
+
+  const writeStr = (offset, string) => {
+    for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+  };
+
+  writeStr(0, 'RIFF'); view.setUint32(4, bufferSize - 8, true); writeStr(8, 'WAVE'); writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, format, true); view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * blockAlign, true);
+  view.setUint16(32, blockAlign, true); view.setUint16(34, bitDepth, true); writeStr(36, 'data'); view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for (let i = 0; i < buffer.length; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      let val = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+      view.setInt16(offset, val < 0 ? val * 0x8000 : val * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return new Blob([view], { type: 'audio/wav' });
+}
+
+refreshMe();
+updateProcessButton();
+</script>
+</body>
+</html>

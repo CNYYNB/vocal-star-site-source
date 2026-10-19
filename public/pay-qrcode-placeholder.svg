@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <rect width="800" height="800" fill="#ffffff"/>
+  <rect x="70" y="70" width="660" height="660" rx="32" fill="#f1f5f9" stroke="#334155" stroke-width="8"/>
+  <text x="400" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="#0f172a">请替换为你的收款码</text>
+  <text x="400" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#475569">把微信/支付宝收款码图片命名为</text>
+  <text x="400" y="445" text-anchor="middle" font-family="Consolas, monospace" font-size="34" font-weight="700" fill="#2563eb">public/pay-qrcode.png</text>
+  <text x="400" y="520" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#64748b">上传部署后，用户充值时会看到你的收款码</text>
+</svg>

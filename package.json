@@ -1,0 +1,16 @@
+{
+  "name": "vocal-star-cloudflare-pages",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public --project-name vocal-star-site",
+    "db:create": "wrangler d1 create vocal-star-db",
+    "db:migrate:local": "wrangler d1 migrations apply vocal-star-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply vocal-star-db --remote"
+  },
+  "devDependencies": {
+    "wrangler": "latest"
+  }
+}

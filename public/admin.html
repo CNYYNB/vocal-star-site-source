@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星声工坊｜后台充值审核</title>
+  <style>
+    :root { --bg:#020617; --card:#0f172a; --line:#1e293b; --text:#f8fafc; --muted:#94a3b8; --ok:#10b981; --warn:#f59e0b; --danger:#ef4444; --blue:#3b82f6; }
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#1e293b,#020617 55%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;padding:24px}
+    .wrap{max-width:1100px;margin:0 auto}.card{background:rgba(15,23,42,.94);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 22px 50px rgba(0,0,0,.35)}
+    h1{margin:0 0 6px;font-size:26px}.muted{color:var(--muted);font-size:13px;line-height:1.7}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    input{background:#020617;border:1px solid #334155;color:var(--text);border-radius:10px;padding:11px;min-width:260px}button{border:none;border-radius:10px;color:white;padding:10px 13px;font-weight:800;cursor:pointer;background:#1e293b}button:hover{filter:brightness(1.1)}.primary{background:linear-gradient(135deg,#2563eb,#7c3aed)}.ok{background:#059669}.danger{background:#991b1b}.ghost{border:1px solid #334155;background:#0b1220}
+    table{width:100%;border-collapse:collapse;margin-top:16px;overflow:hidden;border-radius:14px}th,td{text-align:left;border-bottom:1px solid #1e293b;padding:12px 10px;vertical-align:top;font-size:13px}th{color:#bfdbfe;background:#0b1220}.status{font-weight:900}.pending{color:#fbbf24}.reviewing{color:#38bdf8}.paid{color:#34d399}.rejected{color:#f87171}.toast{min-height:22px;color:#fbbf24;margin-top:10px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}.small{font-size:12px;color:#94a3b8;line-height:1.55}.id{word-break:break-all;color:#c4b5fd}
+    @media(max-width:760px){body{padding:12px}.table-wrap{overflow:auto}input{min-width:0;width:100%}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <h1>后台充值审核</h1>
+          <div class="muted">用户扫码付款后会显示为“等待人工审核”。你核对收款记录后，点击确认到账，系统按订单档位发放星星。实际到账金额不一致时请先核对，再通过补发功能处理。</div>
+        </div>
+        <a href="/" style="color:#93c5fd;text-decoration:none;font-weight:800;">返回前台</a>
+      </div>
+      <div class="top">
+        <input id="admin-pass" type="password" placeholder="输入 ADMIN_PASSWORD 管理员密码" />
+        <div class="actions">
+          <button class="primary" id="save-pass">保存密码</button>
+          <button class="ghost" id="refresh">刷新订单</button>
+        </div>
+      </div>
+      <div style="padding:15px;border:1px solid #334155;border-radius:12px;margin:14px 0;">
+        <h3 style="margin:0 0 8px;">手动补发星星</h3>
+        <p class="small">从下方订单复制用户ID，确认实际到账及已发放数量后补发。每次操作会写入钱包流水；请勿重复提交。</p>
+        <div class="actions">
+          <input id="grant-user" placeholder="用户ID（user_开头）" />
+          <input id="grant-stars" type="number" min="1" max="100000" placeholder="补发数量，例如500" />
+          <input id="grant-reason" placeholder="补发原因/对应订单号（必填）" />
+          <button class="ok" id="grant-submit">核实并补发</button>
+        </div>
+      </div>
+      <div class="toast" id="toast"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>时间</th><th>用户</th><th>金额/星星</th><th>备注</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="tbody"><tr><td colspan="6" class="small">输入管理员密码后刷新。</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<script>
+const $ = id => document.getElementById(id);
+let adminPassword = localStorage.getItem('vocal_admin_password') || '';
+$('admin-pass').value = adminPassword;
+function toast(msg, ok=false){ $('toast').textContent = msg || ''; $('toast').style.color = ok ? '#10b981' : '#fbbf24'; }
+function statusText(s){ return ({pending:'待付款', reviewing:'等待人工审核', paid:'已到账', rejected:'已驳回'})[s] || s; }
+async function adminApi(path, options={}){
+  const headers = Object.assign({'Content-Type':'application/json','X-Admin-Password': adminPassword}, options.headers||{});
+  const res = await fetch(path, Object.assign({}, options, {headers}));
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || '请求失败');
+  return data;
+}
+let currentOrders = [];
+function renderOrders(orders){
+  currentOrders = orders;
+  if(!orders.length){ $('tbody').innerHTML = '<tr><td colspan="6" class="small">暂无订单。</td></tr>'; return; }
+  $('tbody').innerHTML = orders.map(o => `
+    <tr>
+      <td><div>${new Date(o.createdAt).toLocaleString()}</div><div class="small id">${o.id}</div></td>
+      <td>${o.userEmail}<div class="small id">${o.userId}</div></td>
+      <td>¥${o.amountCny}<br>${o.stars} 星</td>
+      <td><b style="color:#fde68a;">${o.memo || '-'}</b><div class="small">让用户付款时备注这个码</div></td>
+      <td class="status ${o.status}">${statusText(o.status)}</td>
+      <td><div class="actions">
+        <button class="ok" onclick="approve('${o.id}')" ${o.status==='paid'?'disabled':''}>确认到账</button>
+        <button class="danger" onclick="rejectOrder('${o.id}')" ${o.status==='paid'?'disabled':''}>驳回</button>
+      </div></td>
+    </tr>`).join('');
+}
+async function loadOrders(){
+  try{ toast('正在加载订单...'); const data = await adminApi('/api/admin/orders'); renderOrders(data.orders); toast('订单已刷新', true); }
+  catch(e){ toast(e.message); }
+}
+window.approve = async function(id){
+  const o = currentOrders.find(x => x.id === id);
+  if(!o || !confirm(`已核对实际收到 ¥${o.amountCny}？确认后将发放 ${o.stars} 星。`)) return;
+  try{ await adminApi(`/api/admin/orders/${id}/approve`, {method:'POST', body:'{}'}); toast('已确认到账，星星已发放', true); loadOrders(); }
+  catch(e){ toast(e.message); }
+}
+window.rejectOrder = async function(id){
+  if(!confirm('确认驳回这笔订单？')) return;
+  try{ await adminApi(`/api/admin/orders/${id}/reject`, {method:'POST', body:'{}'}); toast('已驳回', true); loadOrders(); }
+  catch(e){ toast(e.message); }
+}
+$('save-pass').addEventListener('click', () => { adminPassword = $('admin-pass').value.trim(); localStorage.setItem('vocal_admin_password', adminPassword); toast('管理员密码已保存到本机浏览器', true); loadOrders(); });
+$('grant-submit').addEventListener('click', async () => {
+  const userId = $('grant-user').value.trim(), stars = Number($('grant-stars').value), reason = $('grant-reason').value.trim();
+  if(!/^user_[A-Za-z0-9_-]+$/.test(userId) || !Number.isInteger(stars) || stars<1 || stars>100000 || reason.length<5){ toast('请输入有效用户ID、1至100000的整数星星和至少5字的补发原因'); return; }
+  if(!confirm(`请核实：给 ${userId} 补发 ${stars} 星？\n原因：${reason}\n该操作不能通过重复点击撤销。`)) return;
+  $('grant-submit').disabled = true;
+  try { const data = await adminApi(`/api/admin/users/${encodeURIComponent(userId)}/add-stars`, {method:'POST', body:JSON.stringify({stars,reason})}); toast(`补发成功！当前余额：${data.user.stars} 星`,true); $('grant-stars').value=''; loadOrders(); }
+  catch(e){ toast('补发未确认：'+e.message+'。重试前先核实余额，避免重复补发。'); }
+  finally { $('grant-submit').disabled = false; }
+});
+$('refresh').addEventListener('click', loadOrders);
+if(adminPassword) loadOrders();
+</script>
+</body>
+</html>
